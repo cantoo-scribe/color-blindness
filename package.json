@@ -35,7 +35,7 @@
     "brettel-vienot-mollon",
     "typescript"
   ],
-  "author": "",
+  "author": "sharcoux",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.0",
