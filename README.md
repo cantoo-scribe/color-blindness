@@ -28,29 +28,23 @@ npm install @cantoo/color-blindness
 ## Quick Start
 
 ```typescript
-import { ColorBlindnessSimulator, ColorBlindnessType } from '@cantoo/color-blindness';
+import { protanopia, deuteranopia, simulate, ColorBlindnessType } from '@cantoo/color-blindness';
 
-// Simple API - Returns hex color directly
-const protanopiaColor = ColorBlindnessSimulator.protanopia('#FF0000');
+// Direct functions return hex colors
+const protanopiaColor = protanopia('#FF0000');
 console.log(protanopiaColor); // '#9C9C00'
 
 // Works with different input formats
-const deuteranopia1 = ColorBlindnessSimulator.deuteranopia('#FF0000');     // Hex string
-const deuteranopia2 = ColorBlindnessSimulator.deuteranopia([255, 0, 0]);   // RGB array
-const deuteranopia3 = ColorBlindnessSimulator.deuteranopia({ R: 255, G: 0, B: 0 }); // RGB object
+const deuteranopia1 = deuteranopia('#FF0000');                    // Hex string
+const deuteranopia2 = deuteranopia([255, 0, 0]);                  // RGB array
+const deuteranopia3 = deuteranopia({ R: 255, G: 0, B: 0 });      // RGB object
 
-// Advanced API - Returns detailed result object
-const detailedResult = ColorBlindnessSimulator.simulate('#FF0000', {
+// Use simulate() for custom options
+const customResult = simulate('#FF0000', {
   type: ColorBlindnessType.Deuteranomaly,
   anomalize: true
 });
-console.log(detailedResult);
-// {
-//   original: { R: 255, G: 0, B: 0 },
-//   simulated: { R: 201, G: 123, B: 0 },
-//   type: 'deuteranomaly',
-//   anomalized: true
-// }
+console.log(customResult); // '#CB7B00'
 ```
 
 ## Supported Color Vision Deficiencies
@@ -68,88 +62,67 @@ console.log(detailedResult);
 
 ## Usage Examples
 
-### Simple API (Recommended)
+### Direct Functions (Recommended)
 
 ```typescript
-import { ColorBlindnessSimulator } from '@cantoo/color-blindness';
+import { protanopia, deuteranopia, tritanopia } from '@cantoo/color-blindness';
 
-// Returns hex colors directly - perfect for most use cases
-const protanopia = ColorBlindnessSimulator.protanopia('#FF6B35');      // '#A86B00'
-const deuteranopia = ColorBlindnessSimulator.deuteranopia('#FF6B35');  // '#C4B835'
-const tritanopia = ColorBlindnessSimulator.tritanopia('#FF6B35');      // '#FF6B56'
+// Direct functions return hex colors - perfect for most use cases
+const protanopiaColor = protanopia('#FF6B35');      // '#A86B00'
+const deuteranopiaColor = deuteranopia('#FF6B35');  // '#C4B835'
+const tritanopiaColor = tritanopia('#FF6B35');      // '#FF6B56'
 
 // Works with all input formats
-const fromHex = ColorBlindnessSimulator.protanopia('#FF6B35');
-const fromRGB = ColorBlindnessSimulator.protanopia({ R: 255, G: 107, B: 53 });
-const fromArray = ColorBlindnessSimulator.protanopia([255, 107, 53]);
+const fromHex = protanopia('#FF6B35');
+const fromRGB = protanopia({ R: 255, G: 107, B: 53 });
+const fromArray = protanopia([255, 107, 53]);
 ```
 
-### Intermediate API
+### Custom Options
 
 ```typescript
-import { ColorBlindnessSimulator, ColorBlindnessType } from '@cantoo/color-blindness';
+import { simulate, ColorBlindnessType } from '@cantoo/color-blindness';
 
-// Custom options with hex output
-const customHex = ColorBlindnessSimulator.simulateHex('#FF6B35', {
+// Use simulate() for custom configurations
+const customResult = simulate('#FF6B35', {
   type: ColorBlindnessType.Protanomaly,
   anomalize: true,
   colorProfile: 'sRGB',
   gammaCorrection: 2.2
 });
-console.log(customHex); // '#D4823A'
-```
-
-### Advanced API (Full Control)
-
-```typescript
-import { ColorBlindnessSimulator, ColorBlindnessType } from '@cantoo/color-blindness';
-
-// Detailed result object for analysis
-const result = ColorBlindnessSimulator.simulate('#FF6B35', {
-  type: ColorBlindnessType.Protanomaly,
-  anomalize: true,
-  colorProfile: 'sRGB',
-  gammaCorrection: 2.2
-});
-
-console.log(result.original);   // { R: 255, G: 107, B: 53 }
-console.log(result.simulated);  // { R: 212, G: 130, B: 58 }
-console.log(result.type);       // 'protanomaly'
-console.log(result.anomalized); // true
+console.log(customResult); // '#D4823A'
 ```
 
 ### Batch Processing
 
 ```typescript
+import { protanopia, simulate, ColorBlindnessType } from '@cantoo/color-blindness';
+
 const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
 
-// Simple batch processing with hex output
-const protanopiaColors = colors.map(color => 
-  ColorBlindnessSimulator.protanopia(color)
-);
+// Simple batch processing
+const protanopiaColors = colors.map(color => protanopia(color));
 console.log(protanopiaColors); // ['#9C9C00', '#9C9C00', '#0000FF', '#9C9C00']
 
-// Advanced batch processing with full details
+// Multiple types batch processing
 const colorBlindnessTypes = [
   ColorBlindnessType.Protanopia,
   ColorBlindnessType.Deuteranopia,
   ColorBlindnessType.Tritanopia
 ];
 
-const detailedResults = colors.map(color => 
+const results = colors.map(color => 
   colorBlindnessTypes.map(type => 
-    ColorBlindnessSimulator.simulate(color, { type })
+    simulate(color, { type })
   )
 );
 ```
 
 ## API Reference
 
-### ColorBlindnessSimulator
+### Functions
 
-#### Static Methods
-
-##### Simple API (Returns hex strings)
+#### Direct Functions (Return hex strings)
 - `protanopia(input: ColorInput): string`
 - `protanomaly(input: ColorInput): string`
 - `deuteranopia(input: ColorInput): string`
@@ -159,11 +132,8 @@ const detailedResults = colors.map(color =>
 - `achromatopsia(input: ColorInput): string`
 - `achromatomaly(input: ColorInput): string`
 
-##### Intermediate API
-- `simulateHex(input: ColorInput, options: SimulationOptions): string`
-
-##### Advanced API (Returns detailed objects)
-- `simulate(input: ColorInput, options: SimulationOptions): SimulationResult`
+#### Custom Simulation
+- `simulate(input: ColorInput, options: SimulationOptions): string`
 
 ### Types
 
@@ -191,15 +161,7 @@ interface SimulationOptions {
 }
 ```
 
-#### SimulationResult
-```typescript
-interface SimulationResult {
-  original: RGBColor;
-  simulated: RGBColor;
-  type: ColorBlindnessType;
-  anomalized: boolean;
-}
-```
+
 
 ## Algorithm Details
 

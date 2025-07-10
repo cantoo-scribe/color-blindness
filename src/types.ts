@@ -80,17 +80,3 @@ export interface SimulationOptions {
  * Color input formats supported by the simulator
  */
 export type ColorInput = string | RGBColor | [number, number, number];
-
-/**
- * Result of color blindness simulation
- */
-export interface SimulationResult {
-  /** Original color */
-  original: RGBColor;
-  /** Simulated color as perceived by color blind individuals */
-  simulated: RGBColor;
-  /** Type of color blindness simulated */
-  type: ColorBlindnessType;
-  /** Whether anomalous trichromacy was applied */
-  anomalized: boolean;
-} 

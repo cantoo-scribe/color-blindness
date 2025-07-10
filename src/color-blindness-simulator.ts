@@ -19,8 +19,10 @@ import {
   SimulationOptions,
   ColorBlindnessType,
   ColorInput,
-  SimulationResult
 } from './types';
+
+// Re-export for convenience
+export { ColorBlindnessType };
 
 /**
  * Color transformation matrices for sRGB color space
@@ -314,143 +316,121 @@ function rgbToHex(rgb: RGBColor): string {
 }
 
 /**
- * Main color blindness simulator class
+ * Simulates how a color appears to individuals with specific color vision deficiency
+ * @returns Hex color string (e.g., '#A1B2C3')
  */
-export class ColorBlindnessSimulator {
-  /**
-   * Simulates how a color appears to individuals with specific color vision deficiency
-   * @returns Detailed simulation result with original/simulated colors and metadata
-   */
-  static simulate(input: ColorInput, options: SimulationOptions): SimulationResult {
-    const rgb = parseColorInput(input);
-    const fullOptions = { ...DEFAULT_OPTIONS, ...options };
-    
-    let simulated: RGBColor;
-    
-    // Handle achromatopsia separately
-    if (options.type === ColorBlindnessType.Achromatopsia || options.type === ColorBlindnessType.Achromatomaly) {
-      simulated = simulateAchromatopsia(rgb, options.anomalize || false);
+export function simulate(input: ColorInput, options: SimulationOptions): string {
+  const rgb = parseColorInput(input);
+  const fullOptions = { ...DEFAULT_OPTIONS, ...options };
+  
+  let simulated: RGBColor;
+  
+  // Handle achromatopsia separately
+  if (options.type === ColorBlindnessType.Achromatopsia || options.type === ColorBlindnessType.Achromatomaly) {
+    simulated = simulateAchromatopsia(rgb, options.anomalize || false);
+  } else {
+    // Get configuration for the specific type of color blindness
+    // Both dichromatic (-opia) and anomalous (-omaly) conditions share the same confusion axis
+    let configKey: keyof typeof BLINDNESS_CONFIGURATIONS;
+    if (options.type.startsWith('protan')) {
+      configKey = 'protan';  // protanopia & protanomaly
+    } else if (options.type.startsWith('deutan')) {
+      configKey = 'deutan';  // deuteranopia & deuteranomaly
+    } else if (options.type.startsWith('tritan')) {
+      configKey = 'tritan';  // tritanopia & tritanomaly
     } else {
-      // Get configuration for the specific type of color blindness
-      // Both dichromatic (-opia) and anomalous (-omaly) conditions share the same confusion axis
-      let configKey: keyof typeof BLINDNESS_CONFIGURATIONS;
-      if (options.type.startsWith('protan')) {
-        configKey = 'protan';  // protanopia & protanomaly
-      } else if (options.type.startsWith('deutan')) {
-        configKey = 'deutan';  // deuteranopia & deuteranomaly
-      } else if (options.type.startsWith('tritan')) {
-        configKey = 'tritan';  // tritanopia & tritanomaly
-      } else {
-        configKey = 'custom';  // fallback for experimental or custom configurations
-      }
-      
-      const configuration = BLINDNESS_CONFIGURATIONS[configKey];
-      
-      if (!configuration) {
-        throw new Error(`Unsupported color blindness type: ${options.type}`);
-      }
-      
-      simulated = simulateDichromacy(rgb, configuration, fullOptions);
-      
-      // Apply anomalous trichromacy if requested
-      if (options.anomalize) {
-        const blendFactor = 1.75;
-        const totalWeight = blendFactor + 1;
-        
-        simulated = {
-          R: (blendFactor * simulated.R + rgb.R) / totalWeight,
-          G: (blendFactor * simulated.G + rgb.G) / totalWeight,
-          B: (blendFactor * simulated.B + rgb.B) / totalWeight,
-        };
-      }
+      configKey = 'custom';  // fallback for experimental or custom configurations
     }
     
-    // Ensure RGB values are valid
-    simulated.R = Math.max(0, Math.min(255, simulated.R || 0));
-    simulated.G = Math.max(0, Math.min(255, simulated.G || 0));
-    simulated.B = Math.max(0, Math.min(255, simulated.B || 0));
+    const configuration = BLINDNESS_CONFIGURATIONS[configKey];
     
-    return {
-      original: rgb,
-      simulated,
-      type: options.type,
-      anomalized: options.anomalize || false,
-    };
+    if (!configuration) {
+      throw new Error(`Unsupported color blindness type: ${options.type}`);
+    }
+    
+    simulated = simulateDichromacy(rgb, configuration, fullOptions);
+    
+    // Apply anomalous trichromacy if requested
+    if (options.anomalize) {
+      const blendFactor = 1.75;
+      const totalWeight = blendFactor + 1;
+      
+      simulated = {
+        R: (blendFactor * simulated.R + rgb.R) / totalWeight,
+        G: (blendFactor * simulated.G + rgb.G) / totalWeight,
+        B: (blendFactor * simulated.B + rgb.B) / totalWeight,
+      };
+    }
   }
-
-  /**
-   * Simulates how a color appears to individuals with specific color vision deficiency
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static simulateHex(input: ColorInput, options: SimulationOptions): string {
-    const result = this.simulate(input, options);
-    return rgbToHex(result.simulated);
-  }
-
-  /**
-   * Simulates protanopia (red color blindness)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static protanopia(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Protanopia });
-  }
-
-  /**
-   * Simulates protanomaly (reduced red sensitivity)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static protanomaly(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Protanomaly, anomalize: true });
-  }
-
-  /**
-   * Simulates deuteranopia (green color blindness)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static deuteranopia(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Deuteranopia });
-  }
-
-  /**
-   * Simulates deuteranomaly (reduced green sensitivity)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static deuteranomaly(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Deuteranomaly, anomalize: true });
-  }
-
-  /**
-   * Simulates tritanopia (blue color blindness)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static tritanopia(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Tritanopia });
-  }
-
-  /**
-   * Simulates tritanomaly (reduced blue sensitivity)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static tritanomaly(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Tritanomaly, anomalize: true });
-  }
-
-  /**
-   * Simulates achromatopsia (complete color blindness)
-   * @returns Hex color string (e.g., '#808080')
-   */
-  static achromatopsia(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Achromatopsia });
-  }
-
-  /**
-   * Simulates achromatomaly (reduced color sensitivity)
-   * @returns Hex color string (e.g., '#A1B2C3')
-   */
-  static achromatomaly(input: ColorInput): string {
-    return this.simulateHex(input, { type: ColorBlindnessType.Achromatomaly, anomalize: true });
-  }
+  
+  // Ensure RGB values are valid
+  simulated.R = Math.max(0, Math.min(255, simulated.R || 0));
+  simulated.G = Math.max(0, Math.min(255, simulated.G || 0));
+  simulated.B = Math.max(0, Math.min(255, simulated.B || 0));
+  
+  return rgbToHex(simulated);
 }
 
-// Export the enum for backward compatibility
-export { ColorBlindnessType }; 
+/**
+ * Simulates protanopia (red color blindness)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function protanopia(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Protanopia });
+}
+
+/**
+ * Simulates protanomaly (reduced red sensitivity)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function protanomaly(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Protanomaly, anomalize: true });
+}
+
+/**
+ * Simulates deuteranopia (green color blindness)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function deuteranopia(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Deuteranopia });
+}
+
+/**
+ * Simulates deuteranomaly (reduced green sensitivity)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function deuteranomaly(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Deuteranomaly, anomalize: true });
+}
+
+/**
+ * Simulates tritanopia (blue color blindness)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function tritanopia(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Tritanopia });
+}
+
+/**
+ * Simulates tritanomaly (reduced blue sensitivity)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function tritanomaly(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Tritanomaly, anomalize: true });
+}
+
+/**
+ * Simulates achromatopsia (complete color blindness)
+ * @returns Hex color string (e.g., '#808080')
+ */
+export function achromatopsia(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Achromatopsia });
+}
+
+/**
+ * Simulates achromatomaly (reduced color sensitivity)
+ * @returns Hex color string (e.g., '#A1B2C3')
+ */
+export function achromatomaly(input: ColorInput): string {
+  return simulate(input, { type: ColorBlindnessType.Achromatomaly, anomalize: true });
+}
