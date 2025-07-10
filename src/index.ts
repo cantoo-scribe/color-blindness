@@ -11,6 +11,31 @@
 export * from './color-blindness-simulator';
 export type * from './types';
 
-// Import all functions to create default export
-import * as colorBlindness from './color-blindness-simulator';
+// Explicit default export for better TypeScript support
+import {
+  simulate,
+  protanopia,
+  protanomaly,
+  deuteranopia,
+  deuteranomaly,
+  tritanopia,
+  tritanomaly,
+  achromatopsia,
+  achromatomaly,
+  ColorBlindnessType
+} from './color-blindness-simulator';
+
+const colorBlindness = {
+  simulate,
+  protanopia,
+  protanomaly,
+  deuteranopia,
+  deuteranomaly,
+  tritanopia,
+  tritanomaly,
+  achromatopsia,
+  achromatomaly,
+  ColorBlindnessType
+} as const;
+
 export default colorBlindness;
