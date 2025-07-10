@@ -9,4 +9,8 @@
  */
 
 export * from './color-blindness-simulator';
-export * from './types';
+export type * from './types';
+
+// Import all functions to create default export
+import * as colorBlindness from './color-blindness-simulator';
+export default colorBlindness;
