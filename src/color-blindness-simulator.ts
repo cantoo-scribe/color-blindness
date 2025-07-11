@@ -57,8 +57,8 @@ const BLINDNESS_CONFIGURATIONS: Record<string, BlindnessConfiguration> = {
     yi: -0.073894, // Y-intercept of color axis
   },
   deutan: {
-    x: 1.4,       // Confusion point x-coordinate for deuteranopia/deuteranomaly
-    y: -0.4,      // Confusion point y-coordinate
+    x: 1.02274,   // Confusion point x-coordinate for deuteranopia/deuteranomaly
+    y: -0.02274,  // Confusion point y-coordinate
     m: 0.968437,  // Slope of color axis
     yi: 0.003331, // Y-intercept of color axis
   },
